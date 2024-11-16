@@ -15,7 +15,7 @@ const LOGIN_USER_MUTATION = gql`
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({ email: '', password: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -27,7 +27,7 @@ const Login = () => {
 
     // Basic form validation
     let hasError = false;
-    const newError = { email: '', password: '' };
+    const newError = { email: '', password: '', message: '' };
 
     if (!email) {
       newError.email = "Email can't be empty";
@@ -47,23 +47,29 @@ const Login = () => {
     }
 
     try {
-    //   console.log( response);
+      //   console.log( response);
 
       // Call the login mutation
       const response = await loginUser({
         variables: { email, password },
       });
 
-      console.log( response);
+      console.log(response);
       // Check for successful login
       if (response.data) {
-        console.log('Login successful:', response.data.loginUser);
-        // Navigate to the dashboard after successful login
+        if (response.data.loginUser.usertype === "Admin") {
+          // console.log('Login successful:', response.data.loginUser.usertype);
+          navigate('/home');
+        } else {
+          navigate('/userhome');
+        }
+      } else {
+        setErrors(response.data.loginUser.message);
       }
-      navigate('/dashboard');
 
     } catch (err) {
-      console.error('Login failed:', err.message);
+      newError.message = err.message;
+      setErrors(newError);
     } finally {
       setIsLoading(false);
     }
@@ -95,6 +101,8 @@ const Login = () => {
           <label htmlFor="remember" style={styles.label}>Remember me</label>
           <a href="/" style={styles.forgotPassword}>Forgot password?</a>
         </div>
+
+        {errors.message && <p style={styles.errorText}>{errors.message}</p>}
 
         <button onClick={handleLogin} style={styles.button} disabled={isLoading}>
           {isLoading ? 'Logging in...' : 'Sign In'}

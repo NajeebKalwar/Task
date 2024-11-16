@@ -1,0 +1,96 @@
+/* Reset CSS */
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
+  ul {
+    list-style: none;
+  }
+  
+  a {
+    text-decoration: none;
+    color: #000000;
+    font-size: 18px;
+  }
+  
+  /* Navbar */
+  .navbar {
+    background-color: #f0f8ff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 70px;
+  }
+  
+  /* Logo */
+  .logo {
+    font-size: 30px;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  
+  /* Navigation Menu */
+  .navMenu {
+    display: flex;
+    gap: 60px;
+    align-items: center;
+  }
+  
+  .navLink {
+    color: #000;
+    font-size: 18px;
+  }
+  
+  /* Hamburger menu - hidden on larger screens */
+  .hamburger {
+    display: none;
+    cursor: pointer;
+  }
+  
+  .bar {
+    background-color: #000000;
+    width: 25px;
+    height: 3px;
+    margin: 5px;
+    transition: 0.3s ease-in-out;
+  }
+  
+  /* Responsive Media Queries */
+  @media screen and (max-width: 780px) {
+    /* Hamburger menu - show on small screens */
+    .hamburger {
+      display: block;
+    }
+  
+    /* Navbar menu in mobile mode */
+    .navMenu {
+      position: absolute;
+      top: 70px;
+      left: -100%;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      background-color: #fff;
+      padding: 10px;
+      transition: 0.5s ease;
+    }
+  
+    /* Active class for mobile menu */
+    .navMenu.active {
+      left: 0;
+    }
+  
+    /* Hide middle bar and rotate bars for X effect */
+    .hamburger.active .bar:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active .bar:nth-child(1) {
+      transform: translateY(8px) rotate(45deg);
+    }
+    .hamburger.active .bar:nth-child(3) {
+      transform: translateY(-8px) rotate(-45deg);
+    }
+  }
+  
