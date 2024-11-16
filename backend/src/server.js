@@ -10,8 +10,8 @@ const mongoose = require('mongoose');
 
 
 
-const app = express();//all request are handle by app
-app.use(bodyParser.urlencoded({ extended: true }));//middleware
+const app = express();
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(helmet());
@@ -35,6 +35,19 @@ const typeDefs = `
     attendance: String
     age: Int!
   }
+
+  type Pagination {
+  currentPage: Int
+  totalPages: Int
+  totalEmployees: Int
+}
+
+    type EmpWithPagination {
+      data: [Emp!]!
+      pagination: Pagination
+    }
+
+  
     type User {
         id:ID!
         name:String!
@@ -47,6 +60,9 @@ const typeDefs = `
          usertype:String
          message: String!
     }
+         type message {
+         message:String
+         }
   type Query {
     getEmp: [Emp]
     getUser: [User]
@@ -61,17 +77,22 @@ const typeDefs = `
     type Mutation {
     addUser(input: UserInput): User
     loginUser(email: String!, password: String!): login
+    attendanceUpdate(ID:Int!,attendance:String!):[Emp]
+    deleteEmployee(ID: Int!):message
   }
+    
       type Query {
+    getEmpById(ID:Int!):Emp
     getEmp: [Emp]
+    getEmpWithPagination(page: Int, limit: Int): EmpWithPagination
     getUser: [User]
     }`;
-    
-    // loginUser:[login]
+
+// loginUser:[login]
 
 const resolvers = {
   Query: {
-    getEmp: async () => {
+    getEmp: async () => { //List of employees.
       try {
         const employees = await empModel.find({}, { 'data': 1 });
         return employees[0] ? employees[0].data : [];
@@ -80,10 +101,48 @@ const resolvers = {
         throw new Error('Error fetching employee data');
       }
     },
+    getEmpWithPagination: async (parent, { page, limit }) => {
+      const response = await axios.get(`http://localhost:8000/api/employees?page=${page}&limit=${limit}`);
+      // console.log(response);
+      return response.data; // Only return the array of employees
+    },
+    getEmpById: async (parent, { ID }) => {
+      const response =  (await axios.get(`http://localhost:8000/api/employee/${ID}`));
+      console.log(response.data.data);
+      return response.data.data;
+    },//Retrieve details for a single employee.
     getUser: async () => (await axios.get("http://localhost:8000/api/users")).data,
     getUserById: async (parent, { id }) => (await axios.get(`http://localhost:8000/api/users/${id}`)).data,
   },
   Mutation: {
+    deleteEmployee: async (_, { ID }) => {
+      try {
+
+        const response = await axios.delete(`http://localhost:8000/api/employee/${ID}/delete`);
+        console.log('Requesting delete for ID:', ID, 'with attendance:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error(error);
+        throw new Error('Error deleting user');
+      }
+    },
+    attendanceUpdate: async (_, { ID, attendance }) => {
+      try {
+        console.log('Requesting update for ID:', ID, 'with attendance:', attendance);
+        const response = await axios.put(`http://localhost:8000/api/employee/${ID}/attendance`, { attendance });
+        console.log('API Response:', response.data);
+
+        // if (response.data && response.data.data) {
+        return response.data.data.data;
+        // } else {
+        // throw new Error('Unexpected response structure');
+        // }
+      } catch (error) {
+        console.error('Error in attendanceUpdate mutation:', error.response?.data || error.message || error);
+        throw new Error(`Failed to update attendance: ${error.response?.data.message || error.message || 'Unknown error'}`);
+      }
+    },
+
     addUser: async (_, { input }) => {
       try {
         const { name, email, password, usertype } = input;
@@ -108,19 +167,18 @@ const resolvers = {
       }
     },
     loginUser: async (_, { email, password }) => {
-      // try {
-      
-        const response = await axios.post(`http://localhost:8000/api/users/login`, { email, password });
-       
-        return {
-          email: response.data.user.email,
-          usertype: response.data.user.usertype,
-          message: response.data.message,
-        };
-      // } catch (error) {
-      //   console.error(error);
-      //   throw new Error('Login failed');
-      // }
+      try {
+
+      const response = await axios.post(`http://localhost:8000/api/users/login`, { email, password });
+      return {
+        email: response.data.user.email,
+        usertype: response.data.user.usertype,
+        message: response.data.message,
+      };
+      } catch (error) {
+      console.log(error.response.data.message);
+        throw new Error(error.response.data.message);
+      }
     },
   }
 }

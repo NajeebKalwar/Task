@@ -6,7 +6,7 @@ const bcryptjs = require("bcryptjs");
 exports.createUser = async (req, res) => {
   try {
     const { name, email, password, usertype } = req.body;
-    
+
     const newUser = new UserModel({ name, email, password, usertype });
     await newUser.save();
     res.status(201).json({ message: "User created successfully", user: newUser });
@@ -15,26 +15,35 @@ exports.createUser = async (req, res) => {
   }
 };
 
+
 exports.loginUser = async (req, res) => {
   try {
-      const { email, password } = req.body;
+    const { email, password } = req.body;
+    console.log("Attempting login for:", email);
 
-      // Find user by email
-      const user = await UserModel.findOne({ email });
-      if (!user) {
-          return res.status(404).json({ message: "User not found" });
-      }
-// console.log("dwwdcc");
-      // Compare passwords
-      
-      const isPasswordValid = bcryptjs.compareSync(password, user.password);
-      if (!isPasswordValid) {
-          return res.status(401).json({ message: "Invalid password" });
-      }
+    // Find user by email
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      console.log("User not found:", email);
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-      res.status(200).json({ message: "Login successful", user: { id: user.id, name: user.name, email: user.email, usertype: user.usertype } });
+    // Compare passwords
+    const isPasswordValid = await bcryptjs.compare(password, user.password);
+    if (!isPasswordValid) {
+      console.log("Invalid password for user:", email);
+      return res.status(401).json({ message: 'Invalid password' });
+    }
+
+    console.log("Login successful for:", email);
+    res.status(200).json({
+      message: "Login successful",
+      user: { id: user.id, name: user.name, email: user.email, usertype: user.usertype }
+    });
+
   } catch (error) {
-      res.status(500).json({ message: "Error logging in", error: error.message });
+    console.error("Error logging in:", error.message);
+    res.status(500).json({ message: "Error logging in", error: error.message });
   }
 };
 

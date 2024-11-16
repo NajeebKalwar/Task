@@ -31,7 +31,7 @@ var userSchema = new mongoose.Schema({
     }, 
 },);
 
-userSchema.pre("save",function(next){//save ke time kiya hoga
+userSchema.pre("save",function(next){
         this.id=uuid.v1();        
         this.password=bcryptjs.hashSync(this.password,8);
         next();
